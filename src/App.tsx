@@ -2,55 +2,49 @@ import "./App.css";
 import { useEffect, useState, useCallback } from "react";
 import Post from "./Post";
 
-interface Post {
-  id: number;
-  title: string;
-  body: string;
-  userId: number;
-}
+import { PostProps } from "./types/index";
 
 function App() {
   const [page, setPage] = useState<number>(1);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostProps[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [scrollPosition,setScrollPosition] = useState<number>(0);
+  const [error, setError] = useState<string | unknown>(null);
 
   const fetchPosts = useCallback(async () => {
     console.log("fetching posts");
-    const response = await fetch(
-      `https://dummyjson.com/posts?limit=${page * 10}`
-    );
-    const data = await response.json();
-    console.log("dd", data);
-    setPosts(data.posts);
-    window.scrollTo(0, scrollPosition);
-    setLoading(false);
+    try {
+      const response = await fetch(
+        `https://dummyjson.com/posts?limit=${page * 6}`
+      );
+      const data = await response.json();
+      const posts = data.posts.map((post: PostProps) => ({ id: post.id, title: post.title, body: post.body, reactions: post.reactions, views: post.views }));
+      console.log("posts", posts);
+      setPosts(posts);
+    } catch (error) {
+      console.log("error", error);
+      if (error instanceof Error) {
+        setError({ type: "fetch", message: error.message });
+      } else {
+        setError({ type: "fetch", message: "An unknown error occurred" });
+      }
+    }
+    finally {
+      setLoading(false);
+    }
+    
   }, [page]);
 
   useEffect(() => {
     fetchPosts();
-  }, [page]);
+  }, [page, fetchPosts]);
 
-  function debounce(func: Function, wait: number) {
-    let timeout: number;
-    return function () {
-      const context = this;
-      const args = arguments;
-      const later = function () {
-        func.apply(context, args);
-      };
-      clearTimeout(timeout);
-      timeout = window.setTimeout(later, wait);
-    };
-  }
-
-  const handleScroll = (event: Event) => {
+  
+  const handleScroll = () => {
     if (
       document.body.scrollHeight - 300 <
       window.scrollY + window.innerHeight
     ) {
       setLoading(true);
-      setScrollPosition((event?.target as HTMLElement).scrollTop);
     }
   };
 
@@ -61,38 +55,28 @@ function App() {
   }, [loading]);
 
   useEffect(() => {
-    const debouncedHandleScroll = debounce(handleScroll, 500);
+    const debouncedHandleScroll = handleScroll;
     window.addEventListener("scroll", debouncedHandleScroll);
     return () => window.removeEventListener("scroll", debouncedHandleScroll);
   }, []);
 
   console.log("hello", posts);
-  console.log("page", page);
-  console.log("scrollposition", scrollPosition);
+  console.log("error", error);
+
+  if(error) {
+    return <div>{(error as Error).message}</div>
+  }
 
   return (
-    <div>
-      {
-        loading ? (
-          <div className="container">
-            <div className="spinner-frame">
-              <div className="spinner-cover"></div>
-              <div className="spinner-bar"></div>
-            </div>
-          </div>
-        )
-        :
+    <>
+        <h1>Posts</h1>
         <div>
-          <h1>Posts</h1>
           {
-            posts.map((post) => {
-              return <Post key={post.id} post={post} />;
-            })
+            posts.map((post) =>  <Post key={post.id} post={post} />)
           }
         </div>
-      }
-      
-    </div>
+        {loading && <div className="loading"></div>}      
+    </>
   );
 }
 
