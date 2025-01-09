@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import Post from "./Post";
 
 import { PostProps } from "./types/index";
+import { Constants } from "./constants";
 
 function App() {
   const [page, setPage] = useState<number>(1);
@@ -14,7 +15,7 @@ function App() {
     console.log("fetching posts");
     try {
       const response = await fetch(
-        `https://dummyjson.com/posts?limit=${page * 6}`
+        `${Constants.fetchPostsBaseUrl}?limit=${page * 6}`
       );
       const data = await response.json();
       const posts = data.posts.map((post: PostProps) => ({ id: post.id, title: post.title, body: post.body, reactions: post.reactions, views: post.views }));
@@ -70,6 +71,14 @@ function App() {
   return (
     <>
         <h1>Posts</h1>
+        <div>
+          <select name="sort" id="sort">
+          <option value="">Sort</option>
+            <option value="reactions">Reactions</option>
+            <option value="views">Views</option>
+          </select>
+        </div>
+
         <div>
           {
             posts.map((post) =>  <Post key={post.id} post={post} />)
