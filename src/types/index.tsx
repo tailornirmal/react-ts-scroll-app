@@ -2,7 +2,10 @@ export interface PostProps {
   id: number;
   title: string;
   body: string;
-  reactions: object;
+  reactions: {
+    likes: number;
+    dislikes: number;
+  };
   views: number
 }
 

@@ -13,6 +13,7 @@ interface PostProps {
   };
 }
 
+
 const Post: React.FC<PostProps> = ({ post }) => {
   return (
     <div key={post.id}>
